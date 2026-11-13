@@ -1,0 +1,21 @@
+<!doctype html><html lang="zh-Hant-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net blob:; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' https: data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>食品廣告法規審核</title>
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#1f5f8b">
+<link rel="icon" href="icon.svg">
+<link rel="stylesheet" href="style.css">
+</head><body>
+<div id="login"></div>
+<div id="appv" style="display:none">
+<header><h1>食品廣告法規審核 <span class="sub" id="modeTag"></span></h1>
+<nav><button data-t="scan">廣告審核</button><button data-t="hist">審核紀錄</button><button data-t="kb">法規資料庫</button><button data-t="set">AI 與安全設定</button></nav>
+<span id="status"></span><button class="btn2 light" id="lockBtn">鎖定</button></header>
+<div id="trialBar" class="banner" style="display:none"></div>
+<main id="main"></main></div>
+<dialog id="dlg"></dialog>
+<div id="toast"></div>
+<script src="kb.js"></script><script src="rules.js"></script><script src="hf.js"></script>
+<script src="vendor/mammoth.browser.min.js"></script>
+<script src="app.js"></script>
+</body></html>
