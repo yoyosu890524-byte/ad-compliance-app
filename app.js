@@ -214,7 +214,7 @@ function resultHtml(L){const F=L.findings,c=counts(F);const order={red:0,yellow:
  return `<div class=card><h3>審核結果 <span class=small>${esc(L.title)}｜${L.mode==='health'?'健康食品'+(L.lic?'（'+esc(L.lic)+'）':''):'一般食品'}｜${new Date(L.ts).toLocaleString('zh-TW',{hour12:false})}</span></h3>
  <div class=sum><div class="box risk"><span>整體風險</span><b>${riskOf(c)}</b></div><div class="box red"><span>紅線</span><b>${c.red} 處</b></div><div class="box yellow"><span>黃線</span><b>${c.yellow} 處</b></div><div class="box blue"><span>藍線</span><b>${c.blue} 處</b></div></div>
  ${L.ai?`<div class=card style="background:#f6f0fb;margin:10px 0 0;padding:8px 12px"><b>AI 深度審核摘要</b>（${esc(L.ai.provider)}・${esc(L.ai.model)}）<div style="white-space:pre-wrap">${esc(L.ai.summary||'')}</div></div>`:''}
- <div class="row noprint" style="margin-top:10px"><button class=btn id=bSafe>產生安全版全文</button><button class=btn2 id=bRep>匯出報告…</button><button class=btn2 id=bSaveH>存入審核紀錄</button><button class=btn2 onclick="window.print()">列印</button></div></div>
+ <div class="row noprint" style="margin-top:10px"><button class=btn id=bSafe>產生安全版全文</button><button class=btn data-pdf=1 style="background:#c62828">匯出 PDF 報告</button><button class=btn2 id=bRep>匯出其他格式…</button><button class=btn2 id=bSaveH>存入審核紀錄</button><button class=btn2 onclick="window.print()">列印</button></div></div>
  <div class=card><h3>標示文案 <span class=small>點選標示可跳到對應說明</span></h3><div class=hl id=hl>${hlHtml(L.text,F)||'<span class=muted>（無文字）</span>'}</div></div>
  <div class=card><h3>逐條說明與修改建議</h3>${list.length?list.map(({f,i})=>findHtml(f,i)).join(''):'<p class=ok>未偵測到規則詞庫中的紅線或黃線用語。仍請依整體表現（圖片、影像、聲音、前後文）綜合判斷。</p>'}</div>
  ${L.safe?`<div class=card><h3>安全版全文 <span class=small>${L.safeBy==='AI'?'AI 改寫':'規則式自動替換（草稿，請人工確認語句通順）'}</span></h3><textarea id=safeTxt style="width:100%;min-height:180px">${esc(L.safe)}</textarea><div class=row><button class=btn2 id=bCopySafe>複製安全版全文</button><button class=btn2 id=bUseSafe>以安全版取代原文並重新審核</button></div></div>`:''}`}
@@ -227,7 +227,7 @@ function bindResult(){$$('#hl mark').forEach(m=>m.onclick=()=>{const e=$('#f'+m.
  $$('[data-rep]').forEach(inp=>inp.oninput=()=>{LAST.findings[+inp.dataset.rep].rep=inp.value});
  $$('[data-one]').forEach(b=>b.onclick=()=>applyOne(+b.dataset.one));
  $$('[data-ap]').forEach(b=>b.onclick=()=>{const f=LAST.findings[+b.dataset.ap];f.rep=f.rewrites[+b.dataset.k];applyOne(+b.dataset.ap)});
- const s=$('#bSafe');if(s)s.onclick=makeSafe;const r=$('#bRep');if(r)r.onclick=reportDlg;const h=$('#bSaveH');if(h)h.onclick=()=>saveHist(true);
+ $$('[data-pdf]').forEach(b=>b.onclick=exportPdf);const s=$('#bSafe');if(s)s.onclick=makeSafe;const r=$('#bRep');if(r)r.onclick=reportDlg;const h=$('#bSaveH');if(h)h.onclick=()=>saveHist(true);
  const c=$('#bCopySafe');if(c)c.onclick=()=>copy($('#safeTxt').value);const u=$('#bUseSafe');if(u)u.onclick=()=>{$('#src').value=$('#safeTxt').value;LAST.ai=null;runScan(false)}}
 function applyOne(i){const f=LAST.findings[i],src=$('#src');const t=src.value;if(t.slice(f.s,f.e)!==f.q)return toast('原文已變動，請重新審核');src.value=t.slice(0,f.s)+(f.rep||'')+t.slice(f.e);LAST.ai=null;runScan(true);toast('已套用：「'+f.q+'」→「'+(f.rep||'（刪除）')+'」')}
 function makeSafe(){let t=LAST.text;if(LAST.ai&&LAST.ai.safe){LAST.safe=LAST.ai.safe;LAST.safeBy='AI'}else{
@@ -307,7 +307,7 @@ ${o.ai?`<h2>AI 摘要</h2><p>${esc(o.ai.provider)}・${esc(o.ai.model)}</p><p>${
 <h2>原始文案</h2><p>${esc(o.text).replace(/\n/g,'<br>')}</p>${o.safe?`<h2>安全版全文</h2><p>${esc(o.safe).replace(/\n/g,'<br>')}</p>`:''}<hr><small>本報告為輔助篩檢，非法律意見，最終以主管機關個案認定為準。</small></body></html>`}
 function toCsv(o){const q=s=>'"'+String(s??'').replace(/"/g,'""')+'"';return '\ufeff'+['等級,原文,類別,依據,說明,修改建議,來源',...o.findings.map(f=>[f.等級,f.原文,f.類別,f.依據,f.說明,f.修改建議,f.來源].map(q).join(','))].join('\r\n')}
 function reportDlg(){const o=reportObj(LAST),d=$('#dlg'),fn=(o.title||'報告').replace(/[\\/:*?"<>|]/g,'_');
- d.innerHTML=`<h3>匯出審核報告</h3><p class=small>報告會下載到您的電腦（明文），請自行妥善保管。</p><div class=row><button class=btn2 data-x=md>Markdown（.md）</button><button class=btn2 data-x=doc>Word（.doc）</button><button class=btn2 data-x=html>網頁（.html）</button><button class=btn2 data-x=csv>Excel／CSV（.csv）</button><button class=btn2 data-x=json>JSON</button><button class=btn2 data-x=copy>複製 Markdown</button></div><div class=row><button class=btn id=cc>關閉</button></div>`;d.showModal();$('#cc').onclick=()=>d.close();
+ d.innerHTML=`<h3>匯出審核報告</h3><p class=small>報告會下載到您的電腦（明文），請自行妥善保管。</p><div class=row><button class=btn data-pdf=1 style="background:#c62828">匯出 PDF 報告</button><button class=btn2 data-x=md>Markdown（.md）</button><button class=btn2 data-x=doc>Word（.doc）</button><button class=btn2 data-x=html>網頁（.html）</button><button class=btn2 data-x=csv>Excel／CSV（.csv）</button><button class=btn2 data-x=json>JSON</button><button class=btn2 data-x=copy>複製 Markdown</button></div><div class=row><button class=btn id=cc>關閉</button></div>`;d.showModal();$('#cc').onclick=()=>d.close();d.querySelector('[data-pdf]').onclick=exportPdf;
  d.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{const x=b.dataset.x;if(x==='md')dl(new Blob([toMd(o)],{type:'text/markdown'}),fn+'.md');else if(x==='doc')dl(new Blob(['\ufeff'+toHtml(o)],{type:'application/msword'}),fn+'.doc');
   else if(x==='html')dl(new Blob([toHtml(o)],{type:'text/html'}),fn+'.html');else if(x==='csv')dl(new Blob([toCsv(o)],{type:'text/csv'}),fn+'.csv');else if(x==='json')dl(new Blob([JSON.stringify(o,null,2)],{type:'application/json'}),fn+'.json');else copy(toMd(o))})}
 
@@ -379,3 +379,46 @@ function bindSet(){const sp=$('#sp');sp.onchange=()=>{$('#baseBox').style.displa
  $('#bPw').onclick=setPwDlg;$('#bExp').onclick=exportBackup;$('#bImp').onclick=importBackup;
  $('#bWipe').onclick=()=>{if(confirm('確定清除這台裝置的加密資料、金鑰與審核紀錄？（無法復原）')){localStorage.removeItem(LS);lock()}}}
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+// ================= PDF 報告 =================
+function loadScript(src){return new Promise((res,rej)=>{if(document.querySelector('script[data-src="'+src+'"]'))return res();const s=document.createElement('script');s.src=src;s.dataset.src=src;s.onload=res;s.onerror=()=>rej(new Error('載入失敗：'+src));document.head.appendChild(s)})}
+function pdfBlocks(L){const o=reportObj(L),c=o.counts,TC={red:'#d32f2f',yellow:'#f9a825',blue:'#1e88e5'},TB={red:'#ffebee',yellow:'#fff8e1',blue:'#e3f2fd'};
+ const order={red:0,yellow:1,blue:2};const F=L.findings.map((f,i)=>({f,i})).sort((a,b)=>order[a.f.tier]-order[b.f.tier]||a.f.s-b.f.s);
+ const B=[];
+ B.push(`<div style="border-bottom:3px solid #1f5f8b;padding-bottom:10px;margin-bottom:4px"><div style="font-size:13px;color:#1f5f8b;font-weight:bold">食品廣告法規審核報告</div><div style="font-size:24px;font-weight:bold;margin:4px 0">${esc(o.title)}</div>
+  <table class=pm><tr><td>審核時間</td><td>${esc(o.time)}</td><td>產品身分</td><td>${esc(o.identity)}</td></tr><tr><td>審核方式</td><td>${o.ai?'離線規則預審＋AI 深度審核（'+esc(o.ai.provider)+'・'+esc(o.ai.model)+'）':'離線規則預審'}</td><td>整體風險</td><td><b style="color:${c.red?TC.red:c.yellow?'#b26a00':'#17803d'}">${esc(o.risk)}</b></td></tr></table></div>`);
+ B.push(`<div style="display:flex;gap:10px;margin:6px 0">${[['risk','整體風險',o.risk,'#37474f','#fff'],['red','紅線',c.red+' 處',TC.red,'#fff'],['yellow','黃線',c.yellow+' 處',TC.yellow,'#3a2a00'],['blue','藍線',c.blue+' 處',TC.blue,'#fff']].map(x=>`<div style="flex:1;background:${x[3]};color:${x[4]};border-radius:8px;padding:8px 12px"><div style="font-size:12px">${x[1]}</div><div style="font-size:22px;font-weight:bold">${esc(x[2])}</div></div>`).join('')}</div>
+  <div style="font-size:11px;color:#555;line-height:1.6"><b style="color:${TC.red}">紅線</b> 高風險違規（醫療效能、一般食品宣稱保健功效、超出核准範圍）　<b style="color:#b26a00">黃線</b> 中風險／易生誤解（不實、誇張、改變生理外觀等）　<b style="color:${TC.blue}">藍線</b> 安全可用（附件一、附件二、核准功效原文）</div>`);
+ if(o.ai&&o.ai.summary)B.push(`<h2>AI 深度審核摘要</h2><div style="background:#f6f0fb;border-radius:6px;padding:8px 12px;white-space:pre-wrap">${esc(o.ai.summary)}</div>`);
+ B.push({split:true,html:`<h2>標示文案</h2><div style="white-space:pre-wrap;line-height:2;border:1px solid #ddd;border-radius:6px;padding:10px;font-size:14px">${hlHtml(L.text,L.findings).replace(/<mark class="m-(\w+)"[^>]*>/g,(m,t)=>`<mark style="background:${TB[t]};border-bottom:2px solid ${TC[t]};color:#222">`)||'（無文字）'}</div>`});
+ B.push(`<h2>逐條說明與修改建議（共 ${F.length} 處）</h2>`+(F.length?'':'<p>未偵測到規則詞庫中的紅線或黃線用語。</p>'));
+ F.forEach(({f},k)=>B.push(`<div style="border:1px solid #ddd;border-left:6px solid ${TC[f.tier]};border-radius:6px;padding:8px 12px;margin:0 0 2px">
+  <div><span style="background:${TC[f.tier]};color:${f.tier==='yellow'?'#3a2a00':'#fff'};border-radius:10px;padding:1px 9px;font-size:12px">${TIER[f.tier]}</span> <b>${k+1}.「${esc(f.q)}」</b> <span style="font-size:12px;color:#666">${esc(f.cat)}｜${esc(f.src)}</span></div>
+  ${f.s>=0&&f.tier!=='blue'?`<div style="font-size:12px;color:#666;margin-top:3px">所在句：${esc(sentOf(f))}</div>`:''}
+  <div style="font-size:12px;background:#f3f6f9;border-radius:4px;padding:3px 6px;margin:4px 0">依據：${esc(f.basis)}</div><div style="font-size:13px;white-space:pre-wrap">${esc(f.why)}</div>
+  ${(f.fix||[]).length?`<div style="font-size:13px;margin-top:4px"><b>修改建議：</b><ol style="margin:2px 0 0 18px;padding:0">${f.fix.map(s=>`<li>${esc(s)}</li>`).join('')}</ol></div>`:''}</div>`));
+ if(o.safe)B.push({split:true,html:`<h2>安全版全文${L.safeBy==='AI'?'（AI 改寫）':'（規則式替換草稿，請人工確認）'}</h2><div style="white-space:pre-wrap;line-height:1.9;border:1px solid #cfe3cf;background:#f5fbf5;border-radius:6px;padding:10px;font-size:14px">${esc(o.safe)}</div>`});
+ B.push(`<div style="margin-top:8px;border-top:1px solid #ccc;padding-top:6px;font-size:11px;color:#666;line-height:1.6">法規依據：食品安全衛生管理法 §28、§45；健康食品管理法 §6、§13、§14、§21、§24；食品及相關產品標示宣傳廣告涉及不實誇張易生誤解或醫療效能認定準則（113.05.08 修正）附件一、附件二；衛生福利部食品藥物管理署《食品廣告合規輔導指引》（115.05.18 第 1 版）。<br>免責聲明：本報告為輔助篩檢工具產出，規則僅比對官方例示，非負面表列，亦非法律意見；廣告是否違規仍須依整體表現綜合判斷，並以主管機關個案認定為準。</div>`);
+ return B}
+async function exportPdf(){if(!LAST||!LAST.text.trim())return toast('請先完成審核');const btns=$$('[data-pdf]');btns.forEach(b=>{b.disabled=true;b.dataset.t0=b.textContent;b.textContent='PDF 產生中…'});
+ const host=document.createElement('div');host.style.cssText='position:fixed;left:-10000px;top:0;width:794px;background:#fff';document.body.appendChild(host);
+ try{await loadScript('vendor/html2canvas.min.js');await loadScript('vendor/jspdf.umd.min.js');await document.fonts.ready;
+  const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',format:'a4',compress:true});const PW_=210,PH=297,M=12,HEAD=8,FOOT=10,CW=PW_-2*M,top=M+HEAD,bottom=PH-M-FOOT/2,AH=bottom-top;
+  const css=`<style>.pdfb{font-family:"Noto Sans TC","Noto Sans CJK TC","Microsoft JhengHei","PingFang TC","Heiti TC",sans-serif;color:#222;font-size:14px;line-height:1.55;padding:6px 2px;box-sizing:border-box;width:794px}.pdfb h2{font-size:17px;color:#1f5f8b;margin:6px 0 6px;border-left:4px solid #1f5f8b;padding-left:8px}.pdfb table.pm{border-collapse:collapse;width:100%;font-size:12.5px}.pdfb table.pm td{border:1px solid #ddd;padding:4px 6px}.pdfb table.pm td:nth-child(odd){background:#eef3f7;width:72px;white-space:nowrap}</style>`;
+  let y=top,page=1;const k=CW/794;
+  const newPage=()=>{doc.addPage();page++;y=top};
+  for(const blk of pdfBlocks(LAST)){const html=typeof blk==='string'?blk:blk.html;host.innerHTML=css+`<div class=pdfb>${html}</div>`;const el=host.querySelector('.pdfb');
+   const cv=await html2canvas(el,{scale:2,backgroundColor:'#ffffff',logging:false,useCORS:false,windowWidth:794});const hmm=cv.height/2*k;
+   if(hmm<=bottom-y){doc.addImage(cv.toDataURL('image/jpeg',0.8),'JPEG',M,y,CW,hmm,undefined,'FAST');y+=hmm+2;continue}
+   if(hmm<=AH&&!(blk.split&&hmm>AH*0.5)){newPage();doc.addImage(cv.toDataURL('image/jpeg',0.8),'JPEG',M,y,CW,hmm,undefined,'FAST');y+=hmm+2;continue}
+   // 過長區塊：在行與行之間切分
+   if(bottom-y<25)newPage();let sy=0;const pxPerMm=cv.height/hmm;
+   while(sy<cv.height){let take=Math.floor((bottom-y)*pxPerMm);if(sy+take<cv.height)take=findCut(cv,sy,take);const part=document.createElement('canvas');part.width=cv.width;part.height=Math.min(take,cv.height-sy);
+    part.getContext('2d').drawImage(cv,0,sy,cv.width,part.height,0,0,cv.width,part.height);const ph=part.height/pxPerMm;doc.addImage(part.toDataURL('image/jpeg',0.8),'JPEG',M,y,CW,ph,undefined,'FAST');sy+=part.height;y+=ph+2;if(sy<cv.height)newPage()}}
+  const n=doc.getNumberOfPages();for(let i=1;i<=n;i++){doc.setPage(i);doc.setFontSize(8);doc.setTextColor(120);doc.text(i+' / '+n,PW_/2,PH-M/2-1,{align:'center'});doc.setDrawColor(200);doc.line(M,PH-M-2,PW_-M,PH-M-2);doc.text('Food Ad Compliance Report  '+new Date(LAST.ts).toISOString().slice(0,10),M,M+3)}
+  const fn=(LAST.title||'報告').replace(/[\\/:*?"<>|]/g,'_');dl(doc.output('blob'),'廣告審核報告_'+fn+'.pdf');toast('PDF 報告已下載（'+n+' 頁）')}
+ catch(e){console.warn(e);alert('PDF 產生失敗：'+e.message)}
+ finally{host.remove();btns.forEach(b=>{b.disabled=false;b.textContent=b.dataset.t0})}}
+// 找出切點附近的空白列（避免切到文字）
+function findCut(cv,sy,take){const ctx=cv.getContext('2d'),w=cv.width,min=Math.floor(take*0.6);
+ for(let y=sy+take;y>sy+min;y--){const d=ctx.getImageData(0,y,w,1).data;let dark=0;for(let x=0;x<d.length;x+=16){const v=d[x]+d[x+1]+d[x+2];if(v<600)dark++}if(dark<=2)return y-sy}return take}
