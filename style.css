@@ -37,3 +37,6 @@ dialog{width:760px;max-width:95vw;border:0;border-radius:10px;box-shadow:0 4px 2
 .pill{display:inline-block;background:#eef3f7;border-radius:10px;padding:1px 8px;font-size:12px;margin:2px}
 .ok{color:#17803d}.bad{color:#c62828;font-weight:bold}.muted{color:#888}
 @media print{header,nav,#trialBar,.noprint{display:none!important}main{padding:0}.card{box-shadow:none}}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0}@media(max-width:700px){.cmp{grid-template-columns:1fr}}
+.cmp .orig{background:#fff5f5;border:1px solid #f1d0d0;border-radius:4px;padding:6px 8px;font-size:14px;line-height:1.6}
+.rwbox{width:100%;min-height:64px;line-height:1.6;background:#f5fbf5;border-color:#bcdcbc}

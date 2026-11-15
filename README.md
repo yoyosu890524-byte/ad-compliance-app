@@ -8,5 +8,7 @@
 - 紅線／黃線／藍線分級、法條依據、修改建議、安全版全文、報告匯出（PDF／Markdown／Word／HTML／CSV／JSON）。
 - 機密保護：AI 金鑰與審核紀錄以 AES-256-GCM（PBKDF2-SHA256 600,000 次＋隨機 salt）加密存在使用者瀏覽器；本 repo 不含任何使用者資料。
 - 自備 AI 金鑰：OpenAI、Anthropic Claude、Google Gemini、OpenAI 相容端點。
+- v3：AI 主導逐句審核（快合規式檢核說明＋法規條文＋整句改寫）、原句／改寫句並排套用、「全部套用並潤飾」自動複審（最多 2 輪修正，未標示段落保留原句）。
+- Gemini 免費額度：建議 gemini-3-flash-preview／gemini-3.5-flash／gemini-3.6-flash；gemini-3.1-pro-preview 免費方案額度為 0；各模型每日約 20 次請求（一次完整審核＋潤飾約 3–7 次）。
 
 本工具為輔助篩檢，非法律意見，最終以主管機關個案認定為準。第三方元件授權見 vendor/LICENSE-*。
